@@ -1,0 +1,156 @@
+﻿@{ 
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="Scripts/jquery-1.10.2.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            var note_name = $('#note-name');
+            var note_text = $('#note-text');
+            var notesPlaceHolder = $("#notesPlaceHolder");
+            var noteDropDown = $('#NoteDropDown');
+            $('#update').html("<p><small>Press the get all button to fetch data</small></p>");  
+
+            function getall() {
+                $.ajax({
+                    type: 'GET',
+                    url: 'api/Notes',
+                    dataType: 'json',
+                    success: function (data) {
+                        notesPlaceHolder.empty();
+                        noteDropDown.empty();
+                        note_name.empty();
+                        note_text.empty();
+                        $('#update').empty();
+                        $.each(data, function (index, val) {
+
+                            var notehtml = '<tr>';
+                            notehtml += '<td>' + val.Id + '</td>';
+                            notehtml += '<td>' + val.Name + '</td>';
+                            notehtml += '<td>' + val.Text + '</td>';
+                            notehtml += '</tr>';
+
+                            notesPlaceHolder.append(notehtml);
+                            $('#NoteDropDown').append($('<option></option>').val(val.Id).html(val.Name));
+
+                        });
+                    }
+                });
+            }
+
+            function clearFields() {
+                note_name.empty();
+                note_text.empty();
+            }
+
+            $('#btnGetAll').click(function () {
+                getall();
+            });
+
+            $('#btnGetNote').click(function () {                
+                $.get('/api/Notes/' + $('#NoteDropDown').val(), function(data) {
+      
+                    note_name.html(data.Name);
+                    note_text.html(data.Text);
+                }, 'json');        
+            });
+
+            $('#btnAddNote').click(function () {
+
+                note = {
+                    Name: $('#note-name').val(),
+                    Text: $('#note-text').val()
+                };
+
+                $.ajax({
+                    type: 'post',
+                    url: '/api/Notes/',
+                    data: JSON.stringify(note),
+                    contentType: 'application/json;charset=utf-8',
+                    dataType: 'json'   
+                }).done(function (data, status, xhr) {
+                    window.location.pathname = "/Notes.cshtml";
+                    //getall();
+                    alert("Note added to database");
+                }).fail(function (error) {
+                    alert("Error while adding note")
+                })
+            });
+
+            $('#btnEditNote').click(function () {
+
+                note = {      
+                    Id : $('#NoteDropDown').val(),
+                    Name: $('#note-name').val(),
+                    Text: $('#note-text').val()
+                };
+
+                $.ajax({
+                    type: 'put',
+                    url: '/api/Notes/' + note.Id,
+                    data: JSON.stringify(note),
+                    contentType: 'application/json;charset=utf-8',
+                    dataType: 'json'
+                }).done(function (data, status, xhr) {                    
+                    window.location.pathname = "/Notes.cshtml";                    
+                    //getall();
+                    alert("Note is saved");
+                }).fail(function (error) {
+                    alert("Error while saving note")
+                })
+            });
+        });
+
+
+
+    </script>    
+</head>
+<body>
+    <link href="~/Css/pure-min.css" rel="stylesheet" />
+    <form class="pure-form pure-form-stacked">
+        <fieldset>
+            <legend>
+                <h2>Notes</h2>                
+                <input id="btnGetAll" class="pure-button pure-button-primary" type="button"  title="Press this to fetch all notes from database" value="Get all notes" />
+                <input id="btnGetNote" class="pure-button pure-button-primary" type="button" title="Press this to fetch a note info from dropdown list" value="Get Note" />
+                <input id="btnAddNote" class="pure-button pure-button-primary" type="button" title="Press this to add a new note to database" value="Add New" />
+                <input id="btnEditNote" class="pure-button pure-button-primary" type="button" title="Press this to edit a note from dropdown list" value="Edit Note" />
+                <div id="update"></div>
+            </legend>
+
+            <label>Title</label>
+            <textarea id="note-name" class="pure-input-1-4" placeholder="Note Title" rows="1"></textarea>
+            <br />
+            <label>Text</label>
+            <textarea id="note-text" class="pure-input-1-4" placeholder="Enter your note here" rows="5"></textarea>
+            <br />
+
+            <label for="noteSelect">Select Note</label>
+            <select id="NoteDropDown">
+                <option id="defaultSelect" selected="selected" disabled="disabled">No nodes read yet</option>
+            </select>            
+        </fieldset>
+    </form>
+
+    <table  class="pure-table pure-table-bordered">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Text</th>
+            </tr>
+        </thead>
+        <tbody id="notesPlaceHolder">
+            
+        </tbody>
+    </table>        
+    
+</body>
+</html>
